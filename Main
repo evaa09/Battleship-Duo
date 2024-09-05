@@ -1,0 +1,335 @@
+/**********************************BATTLESHIP DUO Project*****************************
+* PROGRAM NAME - Battleship
+* PROGRAMMERS- Eva Abdul and Elisha Clarke-Rootham
+* DATE - Started 03/21/2023
+*       	    Completed 03/30/2023
+* BUGS - N/A
+* DESCRIPTION - This program lets the user play a one-sided battleship game with the computer. The computer randomly places 5 ships and the user must try to guess where the ships are on a 10x10 grid. The user wins when all the ships are discovered. 
+***********************************************************************************/
+import java.util.*;
+
+class Main {
+  // Initilizing variables used across several methods
+  static Scanner scan = new Scanner(System.in);
+  static int[][] board = new int[10][10];
+  static int hp = 17;
+  static int num = 100;
+  static int choice = 0;
+  // Changing output colours
+  static String BrightBlue = "\u001b[34;1m";
+  static String BrightCyan = "\u001b[36;1m";
+  static String RESET = "\u001b[0m";
+  static String BrightRed = "\u001b[31;1m";
+  static String BrightMagenta = "\u001b[35;1m";
+
+  public static void main(String[] args) {
+
+    // Output and format name of game and instructions
+    System.out.println(BrightBlue + "WELCOME TO....................");
+    System.out.println("______   ___   _____  _____  _      _____  _____  _   _  _____ ______ ");
+    System.out.println("| ___ \\ / _ \\ |_   _||_   _|| |    |  ___|/  ___|| | | ||_   _|| ___ \\");
+    System.out.println("| |_/ // /_\\ \\  | |    | |  | |    | |__  \\ `--. | |_| |  | |  | |_/ /");
+    System.out.println("| ___ \\|  _  |  | |    | |  | |    |  __|  `--. \\|  _  |  | |  |  __/ ");
+    System.out.println("| |_/ /| | | |  | |    | |  | |____| |___ /\\__/ /| | | | _| |_ | |    ");
+    System.out.println("\\____/ \\_| |_/  \\_/    \\_/  \\_____/\\____/ \\____/ \\_| |_/ \\___/ \\_|    " + BrightCyan);
+    System.out.println("");
+    System.out.println(
+        "\nI have placed five ships of varying lengths across by board. You may enter a single number between 1-10 to choose the row and then another number to choose the column. Winning will be achieved when you have successfully dicovered all my ships! I must warn you, it will not be easy!");
+    System.out.println(
+        "\n\nAll empty spaces that have not been played yet are shown as waves (🌊)\nAll spaces where you missed are shown as fish (🐟)\nAll the spaces where you hit the ship are shown as fire (🔥)\n\n\n");
+
+    // Asking user what difficulty they would like to play
+    System.out.print(
+        "What level would you like to play!:\n Easy(1): 100 tries\n Medium(2): 50 tries\n Hard(3): 25 tries \nEnter a number (1,2 or,3): ");
+
+    // Loop that traps user in a try/catch until they enter a number
+    while (true) {
+      try {
+        // User input
+        choice = Integer.parseInt(scan.nextLine());
+        // Loop that traps user until they enter a number between 1 and 3, inclusive
+        while (choice < 1 || choice > 3) {
+          // Output message when invalid input is entered
+          System.out.println("\nInvalid Input! Please enter a 1,2 or 3");
+          System.out.print(
+              "What level would you like to play!:\n Easy(1): 100 tries\n Medium(2): 50 tries\n Hard(3): 25 tries \nEnter a number (1,2 or,3): ");
+          // User input
+          choice = Integer.parseInt(scan.nextLine());
+        }
+        // breaks loop when user enters valid input
+        break;
+      } catch (Exception e) {
+        // Output message when invalid input is entered
+        System.out.println("\nInvalid Input! Please enter a 1,2 or 3");
+        System.out.print(
+            "What level would you like to play!:\n Easy(1): 100 tries\n Medium(2): 50 tries\n Hard(3): 25 tries \nEnter a number (1,2 or,3): ");
+      }
+    }
+    // Setting rest of output to default
+    System.out.print(RESET);
+
+    // Sets user's choice for number of tries
+    if (choice == 2) {
+      num = 50;
+    } else if (choice == 3) {
+      num = 25;
+    }
+    // Calls method for rest of game
+    gameLoop();
+
+  }
+
+  public static void displayBoard() {
+    /*
+     * Array number legend
+     * 0 - Empty square
+     * 1 - Aircraft carrier (A)
+     * 2 - Battleship (B)
+     * 3 - cruiser (C)
+     * 4 - submarine (S)
+     * 5 - destroyer (D)
+     * 6 - Miss (X)
+     * 7 - Hit (*)
+     */
+
+    // Printing out board to user
+    System.out.print("       ");
+    for (int l = 1; l < 11; l++) {
+      System.out.print(l + "     ");
+    }
+    System.out.println("");
+    for (int r = 0; r < board.length; r++) {
+      System.out.print("    ");
+      for (int x = 0; x < 60; x++) {
+        System.out.print("-");
+      }
+      System.out.println("-");
+      if (r == 9) {
+        System.out.print((r + 1) + "  |");
+      } else {
+        System.out.print(" " + (r + 1) + "  |");
+      }
+
+      for (int c = 0; c < board[r].length; c++) {
+
+        String a = " ";
+        if (board[r][c] == 6) {
+          // If user misses, a fish emoji is displayed
+          System.out.print("  🐟 |");
+        } else if (board[r][c] == 7) {
+          // If user hits s ship, a fire emoji is displayed
+          System.out.print("  🔥 |");
+        } else {
+          // Any places the user has not entered are kept as a water emoji
+          System.out.print("  🌊 |");
+        }
+
+      }
+      System.out.println("");
+    }
+    System.out.print("    ");
+    for (int x = 0; x <= 60; x++) {
+      System.out.print("-");
+    }
+    System.out.println("");
+
+  }
+
+  public static void generateBoard() {
+    Random rand = new Random();
+    /*
+     * Length of required 5 ships
+     * Aircraft Carrier (A = 1) - 5 cells
+     * Battleship (B = 2) - 4 cells
+     * Cruiser (C = 3) - 3 cells
+     * Submarine (S = 4) - 3 cells
+     * Destroyer (D = 5) - 2 cells
+     */
+
+    // Create slength array with each index represents a ship and the element
+    // Represents the length of that ship
+    int[] slength = { 5, 4, 3, 3, 2 };
+    // generate random number (1 or 2) for orientation of ship (if 0=horizontal if
+    // 1=vertical)
+    int ori = rand.nextInt(2);
+
+    // Go through slength array
+    for (int i = 0; i < 5; i++) {
+      // generate random number for row and column subtracting the ships length (this
+      // is where the first cell of the ship will start)
+      int row = (rand.nextInt(10 - slength[i]));
+      int col = (rand.nextInt(10 - slength[i]));
+
+      // Run shipCan method showing false if there is another ship where the current
+      // ship if supposed to go and true otherwise, if shipCan is false generate a new
+      // row and column number an keep doing that unti shipCan is true
+      while (!shipCan(row, col, slength[i], ori)) {
+        row = (rand.nextInt(10 - slength[i]));
+        col = (rand.nextInt(10 - slength[i]));
+      }
+
+      // if horizontal
+      if (ori == 0) {
+        // Go through board array and replace the 0(empty space) with the number
+        // representing that ship (see above for legend)(since horizontal same row and
+        // adding one to column)
+        for (int j = 0; j < slength[i]; j++) {
+          board[row][col] = i + 1;
+          col++;
+        }
+      } /* if vertical */else if (ori == 1) {
+        // Go through board array and replace the 0(empty space) with the number
+        // representing that ship (see above for legend)(since vertical same column and
+        // adding one to row)
+        for (int j = 0; j < slength[i]; j++) {
+          board[row][col] = i + 1;
+          row++;
+        }
+
+      }
+      // Generate a new random orientation for next ship
+      ori = rand.nextInt(2);
+    }
+
+  }
+
+  // This method will be true if the ship can be placed and will not overlap any
+  // other ships, otherwise false (row = row number ,col = column number, size =
+  // length of ship, ori = orientation of ship )
+  public static boolean shipCan(int row, int col, int size, int ori) {
+    // If orientation is horizontal
+    if (ori == 0) {
+      // Check board at row column and "size" amount to the left, if any are not zero
+      // (empty) a ship is there, return false
+      for (int a = 0; a < size; a++) {
+        if (board[row][col + a] != 0) {
+          return false;
+        }
+      }
+    } /*
+       * else, Orientation is vertical check board at row column and "size" amount to
+       * the down, if any are not zero (empty) a ship is there, return false
+       */else {
+      for (int a = 0; a < size; a++) {
+        if (board[row + a][col] != 0) {
+          return false;
+        }
+      }
+
+    }
+    // Where the ship would be is all zeros (empty spaces) return true stating the
+    // ship can be placed there
+    return true;
+  }
+
+  public static void playerMove() {
+    // Initializing needed varibles
+    int row = 0;
+    int col = 0;
+
+    // Loop that traps user in a try/catch until they enter a number
+    while (true) {
+      try {
+        // Collects user input
+        System.out.print("Enter a row number: ");
+        row = Integer.parseInt(scan.nextLine());
+        System.out.print("Enter a column number: ");
+        col = Integer.parseInt(scan.nextLine());
+        // Loop that traps user until valid number is entered
+        while (row > 10 || col > 10 || row < 0 || col < 0 || board[row - 1][col - 1] == 6
+            || board[row - 1][col - 1] == 7) {
+          // Output message when invalid input is entered
+          System.out.println(
+              "\nInvalid Input! Please try again. Remember you must choose numbers between 1 and 10, with no spaces, that you haven't previously used\n");
+          // User input
+          System.out.print("Enter a row number: ");
+          row = Integer.parseInt(scan.nextLine());
+          System.out.print("Enter a column number: ");
+          col = Integer.parseInt(scan.nextLine());
+        }
+        // Breaks loop when user enters valid input
+        break;
+      } catch (Exception e) {
+        // Output message when invalid input is entered
+        System.out.println(
+            "\nInvalid Input! Please try again. Remember you must choose numbers between 1 and 10 that you haven't previously used");
+      }
+
+    }
+    // Sets row and col one back to be same as board array index
+    row--;
+    col--;
+    // Tells user if it was a hit or miss
+    if (board[row][col] == 0) {
+      System.out.println("\nYou Missed! You are going to have to try hard than that lassey!\n");
+      board[row][col] = 6;
+    } else {
+      System.out.println("\nGreat Job Matey! Looks like you hit one of me ships!\n");
+      board[row][col] = 7;
+      hp--;
+    }
+
+  }
+
+  public static void gameLoop() {
+    // count = round & round starts at one
+    int count = 1;
+    // Calls method to randomly place ships
+    generateBoard();
+
+    // Running loop until someone wins
+    while (true) {
+      // Formatting Round number to user
+      System.out.println("\n\n");
+      for (int x = 0; x < 66; x++) {
+        System.out.print("_");
+      }
+      System.out.print("\n\n                             Round " + count + "\n");
+      for (int x = 0; x < 66; x++) {
+        System.out.print("_");
+      }
+      System.out.println("\n");
+
+      // Method that prints board out to user
+      displayBoard();
+
+      // Method that collects valid user input
+      playerMove();
+
+      // Output of number of tries user has left
+      System.out.println("You have " + (num - count) + " tries left. ");
+      // Output to user based on whether they won or not
+      if (hp <= 0) {
+        System.out.println("You sunk all my ships. \nCONGRATULATIONS\n\n\n");
+        System.out.println(BrightMagenta + "                       ,:',:`,:'");
+        System.out.println("            __||_||_||_||__");
+        System.out.println("       ____[\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"]____");
+        System.out.println("       \\ \" '''''''''''''''''''' |");
+        System.out.println("^~^~^^~^~^~^~🦜YOU WIN🦜^~^~^~^~~^~^~^^~~^~^");
+
+        break;
+      }
+      if ((num - count == 0)) {
+        System.out.println("You have no more tries left. \nGAME OVER\n\n\n");
+        System.out.println(BrightRed + "                       ______");
+        System.out.println("                    .-\"      \"-.");
+        System.out.println("                   /            \\");
+        System.out.println("       _          |              |          _");
+        System.out.println("      ( \\         |,  .-.  .-.  ,|         / )");
+        System.out.println("       > \"=._     | )(__/  \\__)( |     _.=\" <");
+        System.out.println("      (_/\"=._\"=._ |/     /\\     \\| _.=\"_.=\"\\_)");
+        System.out.println("             \"=._ (_     ^^     _)\"_.=\"");
+        System.out.println("                 \"=\\__|IIIIII|__/=\"");
+        System.out.println("                _.=\"| \\IIIIII/ |\"=._");
+        System.out.println("      _     _.=\"_.=\"\\          /\"=._\"=._     _");
+        System.out.println("     ( \\_.=\"_.=\"     `--------`     \"=._\"=._/ )");
+        System.out.println("      > _.=\"                            \"=._ <");
+        System.out.println("     (_/            👻YOU LOSE!👻           \\_)");
+        break;
+      }
+      count++;
+    }
+
+  }
+
+}
